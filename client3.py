@@ -1,23 +1,3 @@
-################################################################################
-#
-#  Permission is hereby granted, free of charge, to any person obtaining a
-#  copy of this software and associated documentation files (the "Software"),
-#  to deal in the Software without restriction, including without limitation
-#  the rights to use, copy, modify, merge, publish, distribute, sublicense,
-#  and/or sell copies of the Software, and to permit persons to whom the
-#  Software is furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included in
-#  all copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-#  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-#  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-#  DEALINGS IN THE SOFTWARE.
-
 import json
 import random
 import urllib.request
@@ -25,40 +5,42 @@ import urllib.request
 # Server API URLs
 QUERY = "http://localhost:8080/query?id={}"
 
-# 500 server request
+# 500 server requests
 N = 500
-
 
 def getDataPoint(quote):
     """ Produce all the needed values to generate a datapoint """
-    """ ------------- Update this function ------------- """
     stock = quote['stock']
     bid_price = float(quote['top_bid']['price'])
     ask_price = float(quote['top_ask']['price'])
+    # Compute the price using the formula (bid_price + ask_price) / 2
     price = (bid_price + ask_price) / 2
     return stock, bid_price, ask_price, price
 
-
 def getRatio(price_a, price_b):
     """ Get ratio of price_a and price_b """
-    """ ------------- Update this function ------------- """
+    # Handle division by zero
     if price_b == 0:
-        return
-    else:
-        return price_a / price_b
+        return None
+    return price_a / price_b
 
-
-# Main
 if __name__ == "__main__":
-    # Query the price once every N seconds.
-    for _ in iter(range(N)):
-        quotes = json.loads(urllib.request.urlopen(QUERY.format(random.random())).read())
+    for _ in range(N):
+        # Fetch the data from the server
+        response = urllib.request.urlopen(QUERY.format(random.random()))
+        quotes = json.loads(response.read())
 
-        """ ----------- Update to get the ratio --------------- """
+        # Dictionary to store prices
         prices = {}
         for quote in quotes:
             stock, bid_price, ask_price, price = getDataPoint(quote)
             prices[stock] = price
-            print("Quoted %s at (bid:%s, ask:%s, price:%s)" % (stock, bid_price, ask_price, price))
+            print(f"Quoted {stock} at (bid: {bid_price}, ask: {ask_price}, price: {price})")
 
-        print("Ratio %s" % getRatio(prices["ABC"], prices["DEF"]))
+        # Calculate and print the ratio
+        if "ABC" in prices and "DEF" in prices:
+            ratio = getRatio(prices["ABC"], prices["DEF"])
+            if ratio is not None:
+                print(f"Ratio {ratio}")
+            else:
+                print("Ratio is undefined due to division by zero.")
